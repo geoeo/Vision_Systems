@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Globalization;
 using Microsoft.Kinect;
 using Vision.Systems.KinectHealth.Models;
 using Vision.Systems.KinectHealth.CustomEventArgs;
@@ -94,6 +95,11 @@ namespace Vision.Systems.KinectHealth.ViewModels
         /// The class which manages the app logic
         /// </summary>
         private JointVisualizerModel model;
+
+        /// <summary>
+        /// Toggle for showing angles in UI
+        /// </summary>
+        public bool showAngles { get; set; }
 
         public BodyFrameReader bodyFrameReader { get { return model.bodyFrameReader; } }
 
@@ -303,7 +309,18 @@ namespace Vision.Systems.KinectHealth.ViewModels
                 drawPen = drawingPen;
             }
 
-            drawingContext.DrawLine(drawPen, jointPoints[jointType0], jointPoints[jointType1]);
+            var p1 = jointPoints[jointType0];
+            var p2 = jointPoints[jointType1];
+
+            drawingContext.DrawLine(drawPen, p1, p2);
+
+            if (showAngles)
+            {
+                var textPoint = new Point((p1.X + p2.X) / 2, (p1.Y + p2.Y) / 2);
+                drawingContext.DrawText(new FormattedText("TEST", CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface("Verdana"), 12, Brushes.White), textPoint);
+            }
+
+
         }
 
         /// <summary>

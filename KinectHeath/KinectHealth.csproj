@@ -72,6 +72,8 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="CustomEventArgs\BodyEventArgs.cs" />
+    <Compile Include="Libraries\Constants.cs" />
+    <Compile Include="Libraries\VectorMath.cs" />
     <Compile Include="Models\JointVisualizerModel.cs" />
     <Compile Include="ViewModels\JointVisualizerVM.cs" />
     <Page Include="MainWindow.xaml">
