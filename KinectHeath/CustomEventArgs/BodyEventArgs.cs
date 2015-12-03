@@ -10,6 +10,9 @@ namespace Vision.Systems.KinectHealth.CustomEventArgs
         public Body[] bodies { get; set; }
 
         // joint points in depth (display) space per body
-        public Dictionary<ulong,Dictionary<JointType, Point>> jointPointsPerBody { get; set; }
+        public IDictionary<ulong,Dictionary<JointType, Point>> jointPointsPerBody { get; set; }
+
+        //Angles between two joints as described in Wiedemann 3.2
+        public IDictionary<Tuple<JointType, JointType>, double> jointAngles { get; set; }
     }
 }

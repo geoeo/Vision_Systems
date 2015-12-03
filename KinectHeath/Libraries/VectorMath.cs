@@ -7,7 +7,12 @@ namespace Vision.Systems.KinectHealth.Libraries
 {
     public static class VectorMath
     {
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="v"></param>
+        /// <param name="u"></param>
+        /// <returns>Angles in Radians</returns>
         public static double AngleBetweenUsingDot(Vector3D v, Vector3D u)
         {
             var dot = Vector3D.DotProduct(v, u);

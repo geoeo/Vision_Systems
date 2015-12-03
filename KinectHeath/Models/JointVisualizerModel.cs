@@ -144,7 +144,8 @@ namespace Vision.Systems.KinectHealth.Models
         public void Reader_FrameArrived(object sender, BodyFrameArrivedEventArgs e)
         {
             bool dataReceived = false;
-            Dictionary<ulong,Dictionary<JointType, Point>> jointPointsPerBody_local = new Dictionary<ulong,Dictionary<JointType,Point>>();
+            IDictionary<ulong,Dictionary<JointType, Point>> jointPointsPerBody_local = new Dictionary<ulong,Dictionary<JointType,Point>>();
+            IDictionary<Tuple<JointType,JointType>, double> jointAngleMap = null;
 
             using (BodyFrame bodyFrame = e.FrameReference.AcquireFrame())
             {
@@ -176,7 +177,8 @@ namespace Vision.Systems.KinectHealth.Models
                         IReadOnlyDictionary<JointType, Joint> joints = body.Joints;
 
                         ComputeRelativeSegmentVectors(joints);
-                        ComputeRelativeSegmentAngles();
+                        jointAngleMap = ComputeRelativeSegmentAngles();
+
 
                         // convert the joint points to depth (display) space
                         Dictionary<JointType, Point> jointPoints = new Dictionary<JointType, Point>();
@@ -203,16 +205,24 @@ namespace Vision.Systems.KinectHealth.Models
             }
 
             if (frameArrivedInModel != null)
-                frameArrivedInModel(this, new BodyEventArgs { bodies = this.bodies, jointPointsPerBody = jointPointsPerBody_local });
+                frameArrivedInModel(this, new BodyEventArgs { bodies = this.bodies, jointPointsPerBody = jointPointsPerBody_local, jointAngles = jointAngleMap });
         }
 
-        private void ComputeRelativeSegmentAngles()
+        private IDictionary<Tuple<JointType,JointType>,double> ComputeRelativeSegmentAngles()
         {
             relativeSegmentAngles[Constants.A_NECK] = VectorMath.AngleBetweenUsingDot(relativeSegmentToSegmentVectors[Constants.V_NECK], relativeSegmentToSegmentVectors[Constants.V_UPPER_BODY]);
             relativeSegmentAngles[Constants.A_HIP_LEFT] = VectorMath.AngleBetweenUsingDot(relativeSegmentToSegmentVectors[Constants.V_UPPER_BODY], relativeSegmentToSegmentVectors[Constants.V_THIGH_LEFT]);
             relativeSegmentAngles[Constants.A_HIP_RIGHT] = VectorMath.AngleBetweenUsingDot(relativeSegmentToSegmentVectors[Constants.V_UPPER_BODY], relativeSegmentToSegmentVectors[Constants.V_THIGH_RIGHT]);
             relativeSegmentAngles[Constants.A_KNEE_LEFT] = VectorMath.AngleBetweenUsingDot(relativeSegmentToSegmentVectors[Constants.V_THIGH_LEFT], relativeSegmentToSegmentVectors[Constants.V_SHANK_LEFT]);
             relativeSegmentAngles[Constants.A_KNEE_RIGHT] = VectorMath.AngleBetweenUsingDot(relativeSegmentToSegmentVectors[Constants.V_THIGH_RIGHT],relativeSegmentToSegmentVectors[Constants.V_SHANK_RIGHT]);
+
+            return new Dictionary<Tuple<JointType,JointType>, double>(){
+                {new Tuple<JointType,JointType>(JointType.Neck,JointType.SpineShoulder),relativeSegmentAngles[Constants.A_NECK]},
+                {new Tuple<JointType,JointType>(JointType.SpineBase,JointType.HipLeft),relativeSegmentAngles[Constants.A_HIP_LEFT]},
+                {new Tuple<JointType,JointType>(JointType.SpineBase,JointType.HipRight),relativeSegmentAngles[Constants.A_HIP_RIGHT]},
+                {new Tuple<JointType,JointType>(JointType.HipLeft,JointType.KneeLeft),relativeSegmentAngles[Constants.A_KNEE_LEFT]},
+                {new Tuple<JointType,JointType>(JointType.HipRight,JointType.KneeRight),relativeSegmentAngles[Constants.A_KNEE_RIGHT]}
+            };
         }
 
         /// <summary>

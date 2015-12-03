@@ -11,6 +11,7 @@ using System.Globalization;
 using Microsoft.Kinect;
 using Vision.Systems.KinectHealth.Models;
 using Vision.Systems.KinectHealth.CustomEventArgs;
+using Vision.Systems.KinectHealth.Libraries;
 
 namespace Vision.Systems.KinectHealth.ViewModels
 {
@@ -211,6 +212,8 @@ namespace Vision.Systems.KinectHealth.ViewModels
         public void Model_FrameArrived(object sender, BodyEventArgs e)
         {
 
+            if (e.bodies == null) return;
+
             using (DrawingContext dc = this.drawingGroup.Open())
             {
                 // Draw a transparent background to set the render size
@@ -218,7 +221,7 @@ namespace Vision.Systems.KinectHealth.ViewModels
 
                 int penIndex = 0;
                 foreach (Body body in e.bodies)
-                {
+                {                  
                     Pen drawPen = this.bodyColors[penIndex++];
 
                     if (body.IsTracked)
@@ -227,10 +230,12 @@ namespace Vision.Systems.KinectHealth.ViewModels
 
                         IReadOnlyDictionary<JointType, Joint> joints = body.Joints;
 
+                        // Border case, can happen. 
+                        if (e.jointPointsPerBody.Count == 0) return;
                         // convert the joint points to depth (display) space
-                        Dictionary<JointType, Point> jointPoints = e.jointPointsPerBody[body.TrackingId];                    
+                        Dictionary<JointType, Point> jointPoints = e.jointPointsPerBody[body.TrackingId];
 
-                        this.DrawBody(joints, jointPoints, dc, drawPen);
+                        this.DrawBody(joints, jointPoints, e.jointAngles, dc, drawPen);
 
                         this.DrawHand(body.HandLeftState, jointPoints[JointType.HandLeft], dc);
                         this.DrawHand(body.HandRightState, jointPoints[JointType.HandRight], dc);
@@ -250,12 +255,21 @@ namespace Vision.Systems.KinectHealth.ViewModels
         /// <param name="jointPoints">translated positions of joints to draw</param>
         /// <param name="drawingContext">drawing context to draw to</param>
         /// <param name="drawingPen">specifies color to draw a specific body</param>
-        private void DrawBody(IReadOnlyDictionary<JointType, Joint> joints, IDictionary<JointType, Point> jointPoints, DrawingContext drawingContext, Pen drawingPen)
+        private void DrawBody(IReadOnlyDictionary<JointType, Joint> joints, IDictionary<JointType, Point> jointPoints,IDictionary<Tuple<JointType,JointType>,double> jointAngleMap, DrawingContext drawingContext, Pen drawingPen)
         {
             // Draw the bones
             foreach (var bone in model.bones)
             {
-                this.DrawBone(joints, jointPoints, bone.Item1, bone.Item2, drawingContext, drawingPen);
+                var j0 = bone.Item1;
+                var j1 = bone.Item2;
+
+                double angle = -1;
+                if (jointAngleMap != null)
+                {
+                    var key = new Tuple<JointType,JointType>(j0,j1);
+                    if (jointAngleMap.ContainsKey(key)) angle = jointAngleMap[key];
+                }
+                this.DrawBone(joints, jointPoints, j0, j1,angle, drawingContext, drawingPen);
             }
 
             // Draw the joints
@@ -290,7 +304,7 @@ namespace Vision.Systems.KinectHealth.ViewModels
         /// <param name="jointType1">second joint of bone to draw</param>
         /// <param name="drawingContext">drawing context to draw to</param>
         /// /// <param name="drawingPen">specifies color to draw a specific bone</param>
-        private void DrawBone(IReadOnlyDictionary<JointType, Joint> joints, IDictionary<JointType, Point> jointPoints, JointType jointType0, JointType jointType1, DrawingContext drawingContext, Pen drawingPen)
+        private void DrawBone(IReadOnlyDictionary<JointType, Joint> joints, IDictionary<JointType, Point> jointPoints, JointType jointType0, JointType jointType1,double angleBetweenJoints, DrawingContext drawingContext, Pen drawingPen)
         {
             Joint joint0 = joints[jointType0];
             Joint joint1 = joints[jointType1];
@@ -314,10 +328,15 @@ namespace Vision.Systems.KinectHealth.ViewModels
 
             drawingContext.DrawLine(drawPen, p1, p2);
 
-            if (showAngles)
+            // if angles should be shown and an angle exists for the current joint pair
+            if (showAngles && angleBetweenJoints != -1)
             {
-                var textPoint = new Point((p1.X + p2.X) / 2, (p1.Y + p2.Y) / 2);
-                drawingContext.DrawText(new FormattedText("TEST", CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface("Verdana"), 12, Brushes.White), textPoint);
+                var tuple = new Tuple<JointType, JointType>(jointType0, jointType1);
+                var offset = Formatting.offsetMap.ContainsKey(tuple) ? Formatting.offsetMap[tuple] : 0;
+                var flowDirection = Formatting.flowDirectionMap.ContainsKey(tuple) ? Formatting.flowDirectionMap[tuple] : FlowDirection.LeftToRight;
+                var textPoint = new Point(((p1.X + p2.X) / 2) + offset, (p1.Y + p2.Y) / 2);
+                var angleString = angleBetweenJoints.ToString();
+                drawingContext.DrawText(new FormattedText(angleString, CultureInfo.CurrentUICulture, flowDirection, new Typeface("Verdana"), 12, Brushes.White), textPoint);
             }
 
 

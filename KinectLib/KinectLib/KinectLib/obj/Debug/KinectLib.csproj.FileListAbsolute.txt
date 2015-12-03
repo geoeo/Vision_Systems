@@ -1,0 +1,5 @@
+D:\Uni\Vision System\KinectLib\KinectLib\KinectLib\bin\Debug\KinectLib.dll
+D:\Uni\Vision System\KinectLib\KinectLib\KinectLib\bin\Debug\KinectLib.pdb
+D:\Uni\Vision System\KinectLib\KinectLib\KinectLib\obj\Debug\KinectLib.csprojResolveAssemblyReference.cache
+D:\Uni\Vision System\KinectLib\KinectLib\KinectLib\obj\Debug\KinectLib.dll
+D:\Uni\Vision System\KinectLib\KinectLib\KinectLib\obj\Debug\KinectLib.pdb
