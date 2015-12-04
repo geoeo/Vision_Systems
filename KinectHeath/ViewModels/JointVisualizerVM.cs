@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Threading;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Globalization;
@@ -102,12 +103,33 @@ namespace Vision.Systems.KinectHealth.ViewModels
         /// </summary>
         public bool showAngles { get; set; }
 
+        /// <summary>
+        /// Timer to handle the UI response up to actual calibration event
+        /// </summary>
+        private static System.Timers.Timer aTimer = null;
+
+        /// <summary>
+        /// Fixed number of seconds between button press and calibration
+        /// </summary>
+        private readonly int NUMBER_OF_SECONDS_UNTIL_CALIBRATION = 5;
+
+        /// <summary>
+        /// Number of seconds left until calibration starts
+        /// </summary>
+        private int calibrationCountDown = -1;
+
+        /// <summary>
+        /// Very important! Forces timer threads to execute their tasks on main thread
+        /// </summary>
+        private static Dispatcher mainDispatcher;
+
         public BodyFrameReader bodyFrameReader { get { return model.bodyFrameReader; } }
 
         public KinectSensor kinectSensor { get { return model.kinectSensor; } }
 
         public JointVisualizerVM(JointVisualizerModel model)
         {
+            mainDispatcher = Application.Current.Dispatcher;
 
             this.model = model;
 
@@ -139,11 +161,17 @@ namespace Vision.Systems.KinectHealth.ViewModels
 
             this.model.frameArrivedInModel += Model_FrameArrived;
 
+            this.model.gcs.calibrationComplete += OnCalibrationComplete;
+            this.model.gcs.calibrationStarting += OnCalibrationStarting;
+
         }
 
         public void Closing()
         {
-            model.frameArrivedInModel -= Model_FrameArrived;
+            this.model.frameArrivedInModel -= Model_FrameArrived;
+            this.model.gcs.calibrationComplete -= OnCalibrationComplete;
+            this.model.gcs.calibrationStarting -= OnCalibrationStarting;
+
             model.Closing();
         }
 
@@ -202,6 +230,47 @@ namespace Vision.Systems.KinectHealth.ViewModels
                                                             : Properties.Resources.SensorNotAvailableStatusText;
         }
 
+        public void Calibrate()
+        {
+            calibrationCountDown = NUMBER_OF_SECONDS_UNTIL_CALIBRATION;
+            aTimer = new System.Timers.Timer(1000);
+
+            aTimer.Elapsed += OnTimedCountDown;
+            aTimer.AutoReset = true;
+            aTimer.Enabled = true;
+            this.StatusText = calibrationCountDown.ToString();
+        }
+
+        private void OnCalibrationComplete(object sender, EventArgs e)
+        {
+            this.StatusText = QueryStatus(); 
+        }
+
+        private void OnCalibrationStarting(object sender, EventArgs e)
+        {
+            aTimer.Stop();
+            aTimer.Dispose();
+            this.model.Calibrate_GCS();
+        }
+
+        private void OnTimedCountDown(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            var countDown = --calibrationCountDown;
+            this.StatusText = countDown.ToString();
+            if (calibrationCountDown == 0)
+            {
+                this.StatusText = "Calibrating...";
+                // invoke the calibration on the main thread
+                mainDispatcher.Invoke(() => this.model.KickOff_Calibration());
+              
+            }
+        }
+
+        public string QueryStatus()
+        {
+            return this.kinectSensor.IsAvailable ? Properties.Resources.RunningStatusText
+                                                                        : Properties.Resources.NoSensorStatusText;
+        }
 
         
         /// <summary>
@@ -221,7 +290,7 @@ namespace Vision.Systems.KinectHealth.ViewModels
 
                 int penIndex = 0;
                 foreach (Body body in e.bodies)
-                {                  
+                {
                     Pen drawPen = this.bodyColors[penIndex++];
 
                     if (body.IsTracked)
@@ -245,6 +314,7 @@ namespace Vision.Systems.KinectHealth.ViewModels
                 // prevent drawing outside of our render area
                 this.drawingGroup.ClipGeometry = new RectangleGeometry(new Rect(0.0, 0.0, this.displayWidth, this.displayHeight));
             }
+
             
         }
 
@@ -258,7 +328,7 @@ namespace Vision.Systems.KinectHealth.ViewModels
         private void DrawBody(IReadOnlyDictionary<JointType, Joint> joints, IDictionary<JointType, Point> jointPoints,IDictionary<Tuple<JointType,JointType>,double> jointAngleMap, DrawingContext drawingContext, Pen drawingPen)
         {
             // Draw the bones
-            foreach (var bone in model.bones)
+            foreach (var bone in Constants.bones)
             {
                 var j0 = bone.Item1;
                 var j1 = bone.Item2;

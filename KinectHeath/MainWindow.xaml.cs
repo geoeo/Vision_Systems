@@ -46,9 +46,9 @@ namespace Vision.Systems.KinectHealth
             this.DataContext = vm;
 
             // set the status text
-            vm.StatusText = vm.kinectSensor.IsAvailable ? Properties.Resources.RunningStatusText
-                                                            : Properties.Resources.NoSensorStatusText;
+            vm.StatusText = vm.QueryStatus();
         }
+
 
         /// <summary>
         /// Execute shutdown tasks
@@ -64,7 +64,9 @@ namespace Vision.Systems.KinectHealth
 
         private void Calibrate_Click(object sender, RoutedEventArgs e)
         {
+            var vm = this.DataContext as JointVisualizerVM;
 
+            vm.Calibrate();
         }
 
         private void CheckBox_Checked(object sender, RoutedEventArgs e)

@@ -74,6 +74,7 @@
     <Compile Include="CustomEventArgs\BodyEventArgs.cs" />
     <Compile Include="Libraries\Constants.cs" />
     <Compile Include="Libraries\Formatting.cs" />
+    <Compile Include="Libraries\GlobalCoordinateSystem.cs" />
     <Compile Include="Libraries\VectorMath.cs" />
     <Compile Include="Models\JointVisualizerModel.cs" />
     <Compile Include="ViewModels\JointVisualizerVM.cs" />
