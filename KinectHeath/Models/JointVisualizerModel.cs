@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 using System.Windows.Media.Media3D;
 using Microsoft.Kinect;
 using Vision.Systems.KinectHealth.CustomEventArgs;
@@ -47,11 +48,6 @@ namespace Vision.Systems.KinectHealth.Models
         public double[] relativeSegmentAngles;
 
         /// <summary>
-        /// Constant for clamping Z values of camera space points from being negative
-        /// </summary>
-        private const float InferredZPositionClamp = 0.1f;
-
-        /// <summary>
         /// Camera Independent Coordinate System
         /// </summary>
         public readonly GlobalCoordinateSystem gcs = null;
@@ -65,6 +61,15 @@ namespace Vision.Systems.KinectHealth.Models
         /// EventHandler View-Models can subscribe too
         /// </summary>
         public EventHandler<BodyEventArgs> frameArrivedInModel;
+
+        /// <summary>
+        /// Very important! Forces timer threads to execute their tasks on main thread
+        /// </summary>
+        private static Dispatcher mainDispatcher;
+        /// <summary>
+        /// flag set to true if calibration procedure completed
+        /// </summary>
+        private bool calibrated;
 
         public JointVisualizerModel()
         {
@@ -89,13 +94,23 @@ namespace Vision.Systems.KinectHealth.Models
             this.bodyFrameReader.FrameArrived += this.Reader_FrameArrived;
             this.gcs.calibrationComplete += this.Restore_FrameArrived;
 
+            mainDispatcher = Application.Current.Dispatcher;
+
+            this.calibrated = false;
+
         }
 
-        public void KickOff_Calibration()
+        public void StartCalibration()
         {
-            this.bodyFrameReader.FrameArrived -= this.Reader_FrameArrived;
-            this.bodyFrameReader.Dispose();
-            this.gcs.StartCalibration();
+
+            // invoke the calibration on the main thread
+            mainDispatcher.Invoke(() =>
+            {
+                this.bodyFrameReader.FrameArrived -= this.Reader_FrameArrived;
+                this.bodyFrameReader.Dispose();
+                this.gcs.StartCalibration();
+            });
+
         }
 
         public void Calibrate_GCS()
@@ -108,6 +123,12 @@ namespace Vision.Systems.KinectHealth.Models
         {
             this.bodyFrameReader = this.kinectSensor.BodyFrameSource.OpenReader();
             this.bodyFrameReader.FrameArrived += this.Reader_FrameArrived;
+            this.calibrated = true;
+        }
+
+        private void computeRemainingAngles()
+        {
+            
         }
 
         public void Closing()
@@ -143,6 +164,7 @@ namespace Vision.Systems.KinectHealth.Models
             bool dataReceived = false;
             IDictionary<ulong,Dictionary<JointType, Point>> jointPointsPerBody_local = new Dictionary<ulong,Dictionary<JointType,Point>>();
             IDictionary<Tuple<JointType,JointType>, double> jointAngleMap = null;
+            double[] upperBodyAngles_local = new double[3];
 
             using (BodyFrame bodyFrame = e.FrameReference.AcquireFrame())
             {
@@ -166,8 +188,6 @@ namespace Vision.Systems.KinectHealth.Models
 
                 foreach (Body body in this.bodies)
                 {
-
-
                     if (body.IsTracked)
                     {
 
@@ -175,7 +195,10 @@ namespace Vision.Systems.KinectHealth.Models
 
                         ComputeRelativeSegmentVectors(joints);
                         jointAngleMap = ComputeRelativeSegmentAngles();
-
+                        if (calibrated)
+                        {
+                            computeUpperBodyAngles(joints,upperBodyAngles_local);
+                        }
 
                         // convert the joint points to depth (display) space
                         Dictionary<JointType, Point> jointPoints = new Dictionary<JointType, Point>();
@@ -187,7 +210,7 @@ namespace Vision.Systems.KinectHealth.Models
                             CameraSpacePoint position = joints[jointType].Position;
                             if (position.Z < 0)
                             {
-                                position.Z = InferredZPositionClamp;
+                                position.Z = Constants.InferredZPositionClamp;
                             }
 
                             DepthSpacePoint depthSpacePoint = this.coordinateMapper.MapCameraPointToDepthSpace(position);
@@ -202,7 +225,24 @@ namespace Vision.Systems.KinectHealth.Models
             }
 
             if (frameArrivedInModel != null)
-                frameArrivedInModel(this, new BodyEventArgs { bodies = this.bodies, jointPointsPerBody = jointPointsPerBody_local, jointAngles = jointAngleMap });
+                frameArrivedInModel(this, new BodyEventArgs { bodies = this.bodies, jointPointsPerBody = jointPointsPerBody_local, jointAngles = jointAngleMap, upperBodyAngles = upperBodyAngles_local });
+        }
+
+        private void computeUpperBodyAngles(IReadOnlyDictionary<JointType, Joint> joints, double[] upperBodyAngles)
+        {
+            var UB = relativeSegmentToSegmentVectors[Constants.V_UPPER_BODY];
+            var shoulder = relativeSegmentToSegmentVectors[Constants.V_SHOULDER];
+
+            var proj_UB_yz = VectorMath.projectVectorOntoPlane(UB,this.gcs.y,this.gcs.z);
+            var proj_UB_xy = VectorMath.projectVectorOntoPlane(UB,this.gcs.x,this.gcs.y);
+
+            var proj_UB_xz = VectorMath.projectVectorOntoPlane(UB,this.gcs.x, this.gcs.z);
+            var proj_SH_xz = VectorMath.projectVectorOntoPlane(shoulder,this.gcs.x,this.gcs.z);
+
+            upperBodyAngles[Constants.UB_FORWARD] = VectorMath.AngleBetweenUsingDot(proj_UB_yz,this.gcs.z);
+            upperBodyAngles[Constants.UB_LEAN] = VectorMath.AngleBetweenUsingDot(proj_UB_xy, this.gcs.x);
+            upperBodyAngles[Constants.UB_ROTATION] = VectorMath.AngleBetweenUsingDot(proj_UB_xz, proj_SH_xz);
+
         }
 
         private IDictionary<Tuple<JointType,JointType>,double> ComputeRelativeSegmentAngles()

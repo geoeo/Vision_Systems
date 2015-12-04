@@ -14,5 +14,7 @@ namespace Vision.Systems.KinectHealth.CustomEventArgs
 
         //Angles between two joints as described in Wiedemann 3.2
         public IDictionary<Tuple<JointType, JointType>, double> jointAngles { get; set; }
+
+        public double[] upperBodyAngles { get; set; }
     }
 }

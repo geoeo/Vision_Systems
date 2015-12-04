@@ -10,6 +10,11 @@ namespace Vision.Systems.KinectHealth.Libraries
     public static class Constants
     {
 
+       /// <summary>
+       /// Constant for clamping Z values of camera space points from being negative
+       /// </summary>
+       public const float InferredZPositionClamp = 0.1f;
+
        public const int V_NECK = 0;
        public const int V_SHOULDER = 1;
        public const int V_UPPER_BODY = 2;
@@ -23,6 +28,10 @@ namespace Vision.Systems.KinectHealth.Libraries
        public const int A_HIP_RIGHT = 2;
        public const int A_KNEE_LEFT = 3;
        public const int A_KNEE_RIGHT = 4;
+
+       public const int UB_FORWARD = 0;
+       public const int UB_LEAN = 1;
+       public const int UB_ROTATION = 2;
 
        // a bone defined as a line between two joints
        public static readonly IList<Tuple<JointType, JointType>> bones = new List<Tuple<JointType, JointType>>() {

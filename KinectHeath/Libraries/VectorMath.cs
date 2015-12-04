@@ -23,5 +23,15 @@ namespace Vision.Systems.KinectHealth.Libraries
 
             return Math.Acos(term);
         }
+
+        public static Vector3D projectVectorOntoPlane(Vector3D v, Vector3D u1, Vector3D u2)
+        {
+            var n = Vector3D.CrossProduct(u1, u2);
+            n.Normalize();
+
+            var dot = Vector3D.DotProduct(v, n);
+
+            return v - dot * n;
+        }
     }
 }

@@ -118,19 +118,12 @@ namespace Vision.Systems.KinectHealth.ViewModels
         /// </summary>
         private int calibrationCountDown = -1;
 
-        /// <summary>
-        /// Very important! Forces timer threads to execute their tasks on main thread
-        /// </summary>
-        private static Dispatcher mainDispatcher;
-
         public BodyFrameReader bodyFrameReader { get { return model.bodyFrameReader; } }
 
         public KinectSensor kinectSensor { get { return model.kinectSensor; } }
 
         public JointVisualizerVM(JointVisualizerModel model)
         {
-            mainDispatcher = Application.Current.Dispatcher;
-
             this.model = model;
 
             // get the depth (display) extents
@@ -259,10 +252,8 @@ namespace Vision.Systems.KinectHealth.ViewModels
             this.StatusText = countDown.ToString();
             if (calibrationCountDown == 0)
             {
-                this.StatusText = "Calibrating...";
-                // invoke the calibration on the main thread
-                mainDispatcher.Invoke(() => this.model.KickOff_Calibration());
-              
+                this.StatusText = "Calibrating...";                
+                this.model.StartCalibration();          
             }
         }
 
@@ -308,6 +299,18 @@ namespace Vision.Systems.KinectHealth.ViewModels
 
                         this.DrawHand(body.HandLeftState, jointPoints[JointType.HandLeft], dc);
                         this.DrawHand(body.HandRightState, jointPoints[JointType.HandRight], dc);
+
+                        if (showAngles && e.upperBodyAngles != null)
+                        {
+                            var UB_Forward = e.upperBodyAngles[Constants.UB_FORWARD];
+                            var UB_Lean = e.upperBodyAngles[Constants.UB_LEAN];
+                            var UB_Rotation = e.upperBodyAngles[Constants.UB_ROTATION];
+
+
+                            dc.DrawText(new FormattedText(UB_Forward.ToString(), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface("Verdana"), 12, Brushes.LemonChiffon), new Point(10,10));
+                            dc.DrawText(new FormattedText(UB_Lean.ToString(), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface("Verdana"), 12, Brushes.LemonChiffon), new Point(210, 10));
+                            dc.DrawText(new FormattedText(UB_Rotation.ToString(), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface("Verdana"), 12, Brushes.LemonChiffon), new Point(410, 10));
+                        }
                     }
                 }
 
@@ -363,6 +366,8 @@ namespace Vision.Systems.KinectHealth.ViewModels
                     drawingContext.DrawEllipse(drawBrush, null, jointPoints[jointType], JointThickness, JointThickness);
                 }
             }
+
+
         }
 
         /// <summary>
