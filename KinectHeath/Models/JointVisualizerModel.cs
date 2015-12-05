@@ -52,6 +52,8 @@ namespace Vision.Systems.KinectHealth.Models
         /// </summary>
         public readonly GlobalCoordinateSystem gcs = null;
 
+        public readonly SimpleUpperBodyModel simpleUpperBodyModel = null;
+
         /// <summary>
         /// Timer object to handle invocation of calibration procedure.
         /// </summary>
@@ -87,6 +89,7 @@ namespace Vision.Systems.KinectHealth.Models
             relativeSegmentAngles = new double[5];
 
             this.gcs = new GlobalCoordinateSystem(this.kinectSensor);
+            this.simpleUpperBodyModel = new SimpleUpperBodyModel(this.kinectSensor);
 
             // open the sensor
             this.kinectSensor.Open();
@@ -100,6 +103,7 @@ namespace Vision.Systems.KinectHealth.Models
 
         }
 
+        #region Calibration
         public void StartCalibration()
         {
 
@@ -126,10 +130,7 @@ namespace Vision.Systems.KinectHealth.Models
             this.calibrated = true;
         }
 
-        private void computeRemainingAngles()
-        {
-            
-        }
+        #endregion
 
         public void Closing()
         {
@@ -198,6 +199,9 @@ namespace Vision.Systems.KinectHealth.Models
                         if (calibrated)
                         {
                             computeUpperBodyAngles(joints,upperBodyAngles_local);
+                            if (this.simpleUpperBodyModel.SupplySamples(upperBodyAngles_local[Constants.UB_FORWARD])) { 
+                                double index = this.simpleUpperBodyModel.ComputeIndex();
+                            }
                         }
 
                         // convert the joint points to depth (display) space
@@ -227,6 +231,8 @@ namespace Vision.Systems.KinectHealth.Models
             if (frameArrivedInModel != null)
                 frameArrivedInModel(this, new BodyEventArgs { bodies = this.bodies, jointPointsPerBody = jointPointsPerBody_local, jointAngles = jointAngleMap, upperBodyAngles = upperBodyAngles_local });
         }
+
+        #region Angle Computation
 
         private void computeUpperBodyAngles(IReadOnlyDictionary<JointType, Joint> joints, double[] upperBodyAngles)
         {
@@ -302,8 +308,10 @@ namespace Vision.Systems.KinectHealth.Models
             relativeSegmentToSegmentVectors[Constants.V_THIGH_LEFT] = hipLeft3D - kneeLeft3D;
             relativeSegmentToSegmentVectors[Constants.V_SHANK_LEFT] = kneeLeft3D - ankleLeft3D;
             relativeSegmentToSegmentVectors[Constants.V_SHANK_RIGHT] = kneeRight3D - ankleRight3D;
-         
+
         }
+
+        #endregion
 
     }
 }

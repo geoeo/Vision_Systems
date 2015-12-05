@@ -24,6 +24,7 @@ namespace Vision.Systems.KinectHealth
     /// </summary>
     public partial class MainWindow : Window
     {
+        private JointVisualizerVM vm;
 
         /// <summary>
         /// Initializes a new instance of the MainWindow class.
@@ -41,7 +42,7 @@ namespace Vision.Systems.KinectHealth
         /// <param name="e">event arguments</param>
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            var vm = new JointVisualizerVM(new JointVisualizerModel());
+            this.vm = new JointVisualizerVM(new JointVisualizerModel());
 
             this.DataContext = vm;
 
@@ -57,30 +58,22 @@ namespace Vision.Systems.KinectHealth
         /// <param name="e">event arguments</param>
         private void MainWindow_Closing(object sender, CancelEventArgs e)
         {
-            var vm = this.DataContext as JointVisualizerVM;
-
-            vm.Closing();
+            this.vm.Closing();
         }
 
         private void Calibrate_Click(object sender, RoutedEventArgs e)
         {
-            var vm = this.DataContext as JointVisualizerVM;
-
-            vm.Calibrate();
+            this.vm.Calibrate();
         }
 
         private void CheckBox_Checked(object sender, RoutedEventArgs e)
         {
-            var vm = this.DataContext as JointVisualizerVM;
-
-            vm.showAngles = true;
+            this.vm.showAngles = true;
         }
 
         private void CheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
-            var vm = this.DataContext as JointVisualizerVM;
-
-            vm.showAngles = false;
+            this.vm.showAngles = false;
         }
 
     }

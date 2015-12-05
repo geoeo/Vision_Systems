@@ -116,7 +116,9 @@ namespace Vision.Systems.KinectHealth.Libraries
                 calibrationStarting(this, new EventArgs());
         }
 
-         /// <summary>
+
+        #region Handle Kinect Frame
+        /// <summary>
         /// Handles the body frame data arriving from the sensor
         /// </summary>
         /// <param name="sender">object sending the event</param>
@@ -208,6 +210,10 @@ namespace Vision.Systems.KinectHealth.Libraries
 
         }
 
+        #endregion
+
+        #region Measurements
+
         private Vector3D CalculateAverageVector(IList<Vector3D> measurementVector)
         {
             var x = measurementVector.Aggregate(0d, (seed, v) => seed + v.X) / NUMBER_OF_MEASUREMENT_FRAME;
@@ -227,6 +233,7 @@ namespace Vision.Systems.KinectHealth.Libraries
 
             measurementList.Add(j03D - j13D);
         }
+        #endregion
 
         private void returnReaderOwnershipToModel()
         {

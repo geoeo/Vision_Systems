@@ -84,11 +84,6 @@ namespace Vision.Systems.KinectHealth.ViewModels
         private int displayHeight;
 
         /// <summary>
-        /// List of colors for each body tracked
-        /// </summary>
-        private List<Pen> bodyColors;
-
-        /// <summary>
         /// Current status text to display
         /// </summary>
         private string statusText = null;
@@ -112,11 +107,15 @@ namespace Vision.Systems.KinectHealth.ViewModels
         /// Fixed number of seconds between button press and calibration
         /// </summary>
         private readonly int NUMBER_OF_SECONDS_UNTIL_CALIBRATION = 5;
+        /// <summary>
+        /// Fixed number of seconds between button press and observation
+        /// </summary>
+        private readonly int NUMBER_OF_SECONDS_UNTIL_MODEL_START = 5;
 
         /// <summary>
         /// Number of seconds left until calibration starts
         /// </summary>
-        private int calibrationCountDown = -1;
+        private int countDown = -1;
 
         public BodyFrameReader bodyFrameReader { get { return model.bodyFrameReader; } }
 
@@ -142,20 +141,11 @@ namespace Vision.Systems.KinectHealth.ViewModels
             // Create an image source that we can use in our image control
             this.imageSource = new DrawingImage(this.drawingGroup);
 
-            // populate body colors, one for each BodyIndex
-            this.bodyColors = new List<Pen>();
-
-            this.bodyColors.Add(new Pen(Brushes.Red, 6));
-            this.bodyColors.Add(new Pen(Brushes.Orange, 6));
-            this.bodyColors.Add(new Pen(Brushes.Green, 6));
-            this.bodyColors.Add(new Pen(Brushes.Blue, 6));
-            this.bodyColors.Add(new Pen(Brushes.Indigo, 6));
-            this.bodyColors.Add(new Pen(Brushes.Violet, 6));
-
             this.model.frameArrivedInModel += Model_FrameArrived;
 
             this.model.gcs.calibrationComplete += OnCalibrationComplete;
             this.model.gcs.calibrationStarting += OnCalibrationStarting;
+
 
         }
 
@@ -223,15 +213,22 @@ namespace Vision.Systems.KinectHealth.ViewModels
                                                             : Properties.Resources.SensorNotAvailableStatusText;
         }
 
+        public string QueryStatus()
+        {
+            return this.kinectSensor.IsAvailable ? Properties.Resources.RunningStatusText
+                                                                        : Properties.Resources.NoSensorStatusText;
+        }
+
+        #region Calibration
         public void Calibrate()
         {
-            calibrationCountDown = NUMBER_OF_SECONDS_UNTIL_CALIBRATION;
+            countDown = NUMBER_OF_SECONDS_UNTIL_CALIBRATION;
             aTimer = new System.Timers.Timer(1000);
 
-            aTimer.Elapsed += OnTimedCountDown;
+            aTimer.Elapsed += OnTimedCalibrationCountDown;
             aTimer.AutoReset = true;
             aTimer.Enabled = true;
-            this.StatusText = calibrationCountDown.ToString();
+            this.StatusText = countDown.ToString();
         }
 
         private void OnCalibrationComplete(object sender, EventArgs e)
@@ -246,24 +243,21 @@ namespace Vision.Systems.KinectHealth.ViewModels
             this.model.Calibrate_GCS();
         }
 
-        private void OnTimedCountDown(object sender, System.Timers.ElapsedEventArgs e)
+        private void OnTimedCalibrationCountDown(object sender, System.Timers.ElapsedEventArgs e)
         {
-            var countDown = --calibrationCountDown;
+            var countDown = --this.countDown;
             this.StatusText = countDown.ToString();
-            if (calibrationCountDown == 0)
+            if (countDown == 0)
             {
                 this.StatusText = "Calibrating...";                
                 this.model.StartCalibration();          
             }
         }
 
-        public string QueryStatus()
-        {
-            return this.kinectSensor.IsAvailable ? Properties.Resources.RunningStatusText
-                                                                        : Properties.Resources.NoSensorStatusText;
-        }
+        #endregion
 
-        
+        #region Drawing
+
         /// <summary>
         /// Handles the body frame data arriving from the sensor
         /// </summary>
@@ -282,7 +276,7 @@ namespace Vision.Systems.KinectHealth.ViewModels
                 int penIndex = 0;
                 foreach (Body body in e.bodies)
                 {
-                    Pen drawPen = this.bodyColors[penIndex++];
+                    Pen drawPen = Formatting.bodyColors[penIndex++];
 
                     if (body.IsTracked)
                     {
@@ -482,5 +476,8 @@ namespace Vision.Systems.KinectHealth.ViewModels
                     new Rect(this.displayWidth - ClipBoundsThickness, 0, ClipBoundsThickness, this.displayHeight));
             }
         }
+
+        #endregion
+
     }
 }

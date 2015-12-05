@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 using Microsoft.Kinect;
 
 namespace Vision.Systems.KinectHealth.Libraries
@@ -26,6 +27,19 @@ namespace Vision.Systems.KinectHealth.Libraries
             {new Tuple<JointType,JointType>(JointType.SpineBase,JointType.HipRight),FlowDirection.RightToLeft},
             {new Tuple<JointType,JointType>(JointType.HipLeft,JointType.KneeLeft),FlowDirection.LeftToRight},
             {new Tuple<JointType,JointType>(JointType.HipRight,JointType.KneeRight),FlowDirection.RightToLeft}
+        };
+
+        /// <summary>
+        /// List of colors for each body tracked
+        /// </summary>
+        public static readonly List<Pen> bodyColors = new List<Pen>()
+        {
+            new Pen(Brushes.Red, 6),
+            new Pen(Brushes.Orange, 6),
+            new Pen(Brushes.Green, 6),
+            new Pen(Brushes.Blue, 6),
+            new Pen(Brushes.Indigo, 6),
+            new Pen(Brushes.Violet, 6)
         };
     }
 }
