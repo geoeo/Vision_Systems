@@ -33,6 +33,10 @@ namespace Vision.Systems.KinectHealth.Libraries
        public const int UB_LEAN = 1;
        public const int UB_ROTATION = 2;
 
+       public const int SIMPLE_INDEX = 0;
+       public const int COMPLEX_INDEX = 1;
+       public const int WHOLE_INDEX = 2;
+
        // a bone defined as a line between two joints
        public static readonly IList<Tuple<JointType, JointType>> bones = new List<Tuple<JointType, JointType>>() {
            // Torso

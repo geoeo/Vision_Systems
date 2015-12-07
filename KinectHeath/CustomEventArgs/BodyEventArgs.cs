@@ -16,5 +16,7 @@ namespace Vision.Systems.KinectHealth.CustomEventArgs
         public IDictionary<Tuple<JointType, JointType>, double> jointAngles { get; set; }
 
         public double[] upperBodyAngles { get; set; }
+
+        public double[] modelIndex { get; set; }
     }
 }

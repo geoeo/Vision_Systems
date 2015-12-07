@@ -95,9 +95,17 @@ namespace Vision.Systems.KinectHealth.Libraries
             var sum_diff = measurementFrame.Select(x => x - mean).Aggregate(0d, (seed, v) => seed + v * v);
             sigma_ub = Math.Sqrt(sum_diff/NUMBER_OF_MEASUREMENT_FRAME);
 
-            //TODO Compute REST
+            var weight = weighting(mean);
 
-            return -1;
+            return 1 - (sigma_ub * weight / sigma_ref);
+        }
+
+        private double weighting(double mean)
+        {
+            var e_UB_forward = 0d; // error is 0 as detailed in section 3.3.1
+            var l_UB_forward = Math.PI/2; // angle is 90 degrees as detailed in section 3.3.1
+
+            return mean <= l_UB_forward - e_UB_forward ? mean / (l_UB_forward - e_UB_forward) : 1;
         }
     }
 }

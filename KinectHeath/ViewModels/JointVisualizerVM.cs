@@ -107,10 +107,6 @@ namespace Vision.Systems.KinectHealth.ViewModels
         /// Fixed number of seconds between button press and calibration
         /// </summary>
         private readonly int NUMBER_OF_SECONDS_UNTIL_CALIBRATION = 5;
-        /// <summary>
-        /// Fixed number of seconds between button press and observation
-        /// </summary>
-        private readonly int NUMBER_OF_SECONDS_UNTIL_MODEL_START = 5;
 
         /// <summary>
         /// Number of seconds left until calibration starts
@@ -305,6 +301,14 @@ namespace Vision.Systems.KinectHealth.ViewModels
                             dc.DrawText(new FormattedText(UB_Lean.ToString(), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface("Verdana"), 12, Brushes.LemonChiffon), new Point(210, 10));
                             dc.DrawText(new FormattedText(UB_Rotation.ToString(), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface("Verdana"), 12, Brushes.LemonChiffon), new Point(410, 10));
                         }
+
+                        if (showAngles && e.modelIndex != null)
+                        {
+                            var simpleIndex = e.modelIndex[Constants.SIMPLE_INDEX];
+                            var simpleIndexString = simpleIndex == -100 ? "Not enough measurements or not calibrated" : simpleIndex.ToString();
+                            dc.DrawText(new FormattedText(simpleIndexString, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface("Verdana"), 12, Brushes.MediumSeaGreen), new Point(10, this.displayHeight - 50));
+
+                       }
                     }
                 }
 

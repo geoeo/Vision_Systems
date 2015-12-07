@@ -166,6 +166,7 @@ namespace Vision.Systems.KinectHealth.Models
             IDictionary<ulong,Dictionary<JointType, Point>> jointPointsPerBody_local = new Dictionary<ulong,Dictionary<JointType,Point>>();
             IDictionary<Tuple<JointType,JointType>, double> jointAngleMap = null;
             double[] upperBodyAngles_local = new double[3];
+            double[] modelIndex_local = new double[3] {-100,-100,-100};
 
             using (BodyFrame bodyFrame = e.FrameReference.AcquireFrame())
             {
@@ -200,7 +201,7 @@ namespace Vision.Systems.KinectHealth.Models
                         {
                             computeUpperBodyAngles(joints,upperBodyAngles_local);
                             if (this.simpleUpperBodyModel.SupplySamples(upperBodyAngles_local[Constants.UB_FORWARD])) { 
-                                double index = this.simpleUpperBodyModel.ComputeIndex();
+                                modelIndex_local[Constants.SIMPLE_INDEX] = this.simpleUpperBodyModel.ComputeIndex();
                             }
                         }
 
@@ -229,7 +230,13 @@ namespace Vision.Systems.KinectHealth.Models
             }
 
             if (frameArrivedInModel != null)
-                frameArrivedInModel(this, new BodyEventArgs { bodies = this.bodies, jointPointsPerBody = jointPointsPerBody_local, jointAngles = jointAngleMap, upperBodyAngles = upperBodyAngles_local });
+                frameArrivedInModel(this, new BodyEventArgs { 
+                    bodies = this.bodies, 
+                    jointPointsPerBody = jointPointsPerBody_local, 
+                    jointAngles = jointAngleMap, 
+                    upperBodyAngles = upperBodyAngles_local,
+                    modelIndex = modelIndex_local
+                });
         }
 
         #region Angle Computation
