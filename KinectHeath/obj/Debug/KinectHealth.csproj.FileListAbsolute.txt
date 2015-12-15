@@ -27,4 +27,3 @@ D:\Uni\Vision System\KinectHeath\obj\Debug\KinectHealth.g.resources
 D:\Uni\Vision System\KinectHeath\obj\Debug\Vision.Systems.KinectHealth.Properties.Resources.resources
 D:\Uni\Vision System\KinectHeath\obj\Debug\KinectHealth.csproj.GenerateResource.Cache
 D:\Uni\Vision System\KinectHeath\obj\Debug\KinectHealth_MarkupCompile.lref
-D:\Uni\Vision System\KinectHeath\obj\Debug\KinectHealth.csprojResolveAssemblyReference.cache

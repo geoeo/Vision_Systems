@@ -52,6 +52,8 @@ namespace Vision.Systems.KinectHealth.Models
         /// </summary>
         public readonly GlobalCoordinateSystem gcs = null;
 
+        public readonly Sampler[] samplers = null;
+
         public readonly SimpleUpperBodyModel simpleUpperBodyModel = null;
 
         /// <summary>
@@ -85,11 +87,18 @@ namespace Vision.Systems.KinectHealth.Models
             // open the reader for the body frames
             this.bodyFrameReader = this.kinectSensor.BodyFrameSource.OpenReader();    
 
-            relativeSegmentToSegmentVectors = new Vector3D[7];
+            relativeSegmentToSegmentVectors = new Vector3D[8];
             relativeSegmentAngles = new double[5];
 
+            this.samplers = new Sampler[Constants.SAMPLE_SET_SIZE];
+
+            for (int i = 0; i < Constants.SAMPLE_SET_SIZE; i++)
+            {
+                this.samplers[i] = new Sampler();
+            }
+
             this.gcs = new GlobalCoordinateSystem(this.kinectSensor);
-            this.simpleUpperBodyModel = new SimpleUpperBodyModel(this.kinectSensor);
+            this.simpleUpperBodyModel = new SimpleUpperBodyModel(EmpiricalData.r_ub,EmpiricalData.sigma_ref_ub);
 
             // open the sensor
             this.kinectSensor.Open();
@@ -165,7 +174,7 @@ namespace Vision.Systems.KinectHealth.Models
             bool dataReceived = false;
             IDictionary<ulong,Dictionary<JointType, Point>> jointPointsPerBody_local = new Dictionary<ulong,Dictionary<JointType,Point>>();
             IDictionary<Tuple<JointType,JointType>, double> jointAngleMap = null;
-            double[] upperBodyAngles_local = new double[3];
+            double[] upperBodyAngles_local = new double[4];
             double[] modelIndex_local = new double[3] {-100,-100,-100};
 
             using (BodyFrame bodyFrame = e.FrameReference.AcquireFrame())
@@ -200,8 +209,18 @@ namespace Vision.Systems.KinectHealth.Models
                         if (calibrated)
                         {
                             computeUpperBodyAngles(joints,upperBodyAngles_local);
-                            if (this.simpleUpperBodyModel.SupplySamples(upperBodyAngles_local[Constants.UB_FORWARD])) { 
-                                modelIndex_local[Constants.SIMPLE_INDEX] = this.simpleUpperBodyModel.ComputeIndex();
+
+                            #region collectSamples
+                            this.samplers[Constants.UB_FORWARD_SAMPLE_INDEX].SupplySamples(upperBodyAngles_local[Constants.UB_FORWARD]);
+                            this.samplers[Constants.UB_LEAN_SAMPLE_INDEX].SupplySamples(upperBodyAngles_local[Constants.UB_LEAN]);
+                            this.samplers[Constants.UB_ROTATION_SAMPLE_INDEX].SupplySamples(upperBodyAngles_local[Constants.UB_ROTATION]);
+                            this.samplers[Constants.NECK_SAMPLE_INDEX].SupplySamples(relativeSegmentAngles[Constants.A_NECK]);
+                            this.samplers[Constants.LOS_SAMPLE_INDEX].SupplySamples(upperBodyAngles_local[Constants.UB_LOS]);
+                            this.samplers[Constants.VIEWING_DIST_SAMPLE_INDEX].SupplySamples(relativeSegmentToSegmentVectors[Constants.V_SCREEN_EDGE].Length);
+                            #endregion
+
+                            if (this.simpleUpperBodyModel.hasEnoughSamples(this.samplers)) {
+                                modelIndex_local[Constants.SIMPLE_INDEX] = this.simpleUpperBodyModel.ComputeIndex(this.samplers);
                             }
                         }
 
@@ -245,6 +264,7 @@ namespace Vision.Systems.KinectHealth.Models
         {
             var UB = relativeSegmentToSegmentVectors[Constants.V_UPPER_BODY];
             var shoulder = relativeSegmentToSegmentVectors[Constants.V_SHOULDER];
+            var screen_edge = relativeSegmentToSegmentVectors[Constants.V_SCREEN_EDGE];
 
             var proj_UB_yz = VectorMath.projectVectorOntoPlane(UB,this.gcs.y,this.gcs.z);
             var proj_UB_xy = VectorMath.projectVectorOntoPlane(UB,this.gcs.x,this.gcs.y);
@@ -255,6 +275,7 @@ namespace Vision.Systems.KinectHealth.Models
             upperBodyAngles[Constants.UB_FORWARD] = VectorMath.AngleBetweenUsingDot(proj_UB_yz,this.gcs.z);
             upperBodyAngles[Constants.UB_LEAN] = VectorMath.AngleBetweenUsingDot(proj_UB_xy, this.gcs.x);
             upperBodyAngles[Constants.UB_ROTATION] = VectorMath.AngleBetweenUsingDot(proj_UB_xz, proj_SH_xz);
+            upperBodyAngles[Constants.UB_LOS] = VectorMath.AngleBetweenUsingDot(this.gcs.z, screen_edge);
 
         }
 
@@ -315,6 +336,9 @@ namespace Vision.Systems.KinectHealth.Models
             relativeSegmentToSegmentVectors[Constants.V_THIGH_LEFT] = hipLeft3D - kneeLeft3D;
             relativeSegmentToSegmentVectors[Constants.V_SHANK_LEFT] = kneeLeft3D - ankleLeft3D;
             relativeSegmentToSegmentVectors[Constants.V_SHANK_RIGHT] = kneeRight3D - ankleRight3D;
+
+            if(this.calibrated)
+                relativeSegmentToSegmentVectors[Constants.V_SCREEN_EDGE] = head3D - this.gcs.screen_edge_avg;
 
         }
 

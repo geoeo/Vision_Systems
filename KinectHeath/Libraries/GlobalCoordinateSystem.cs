@@ -19,15 +19,7 @@ namespace Vision.Systems.KinectHealth.Libraries
         public Vector3D x { get; private set; }
         public Vector3D y { get; private set; }
         public Vector3D z { get; private set; }
-        public Vector3D screen_edge { get; private set; }
-
-        public double viewingDistance
-        {
-            get
-            {
-                return screen_edge.Length;
-            }
-        }
+        public Vector3D screen_edge_avg { get; private set; }
 
         /// <summary>
         /// Active Kinect sensor
@@ -107,7 +99,7 @@ namespace Vision.Systems.KinectHealth.Libraries
             this.x = new Vector3D(0,0,0);
             this.y = new Vector3D(0,0,0);
             this.z = new Vector3D(0,0,0);
-            this.screen_edge = new Vector3D(0, 0, 0);
+            this.screen_edge_avg = new Vector3D(0, 0, 0);
 
             this.hipMeasurements.Clear();
             this.screenEdgeMeasurements.Clear();
@@ -164,8 +156,8 @@ namespace Vision.Systems.KinectHealth.Libraries
                         // convert the joint points to depth (display) space
                         Dictionary<JointType, Point> jointPoints = new Dictionary<JointType, Point>();
 
-                        takeMeasurement(joints, JointType.HipRight, JointType.HipLeft,this.hipMeasurements);
-                        takeMeasurement(joints, JointType.Head, JointType.HandTipLeft,this.screenEdgeMeasurements);
+                        takeMeasurement(joints, JointType.HipRight,JointType.HipLeft,this.hipMeasurements);
+                        takeMeasurement(joints,JointType.HandTipLeft,this.screenEdgeMeasurements);
 
                         foreach (JointType jointType in joints.Keys)
                         {
@@ -195,12 +187,11 @@ namespace Vision.Systems.KinectHealth.Libraries
             {
 
                 var v_ref_x = CalculateAverageVector(this.hipMeasurements);
-                this.screen_edge = CalculateAverageVector(this.screenEdgeMeasurements);
+                this.screen_edge_avg = CalculateAverageVector(this.screenEdgeMeasurements);
 
                 this.z = Vector3D.CrossProduct(this.y, v_ref_x);
                 this.x = Vector3D.CrossProduct(this.y,this.z);
 
-                this.screen_edge.Normalize();
                 this.z.Normalize();
                 this.x.Normalize();
 
@@ -232,6 +223,16 @@ namespace Vision.Systems.KinectHealth.Libraries
             Vector3D j13D = new Vector3D(j1Camera.X, j1Camera.Y, j1Camera.Z);
 
             measurementList.Add(j03D - j13D);
+
+        }
+
+        private void takeMeasurement(IReadOnlyDictionary<JointType, Joint> joints, JointType j0, IList<Vector3D> measurementList)
+        {
+            CameraSpacePoint j0Camera = joints[j0].Position;
+            Vector3D j03D = new Vector3D(j0Camera.X, j0Camera.Y, j0Camera.Z);
+
+            measurementList.Add(j03D);
+
         }
         #endregion
 

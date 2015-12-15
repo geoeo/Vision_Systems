@@ -22,6 +22,7 @@ namespace Vision.Systems.KinectHealth.Libraries
        public const int V_THIGH_LEFT = 4;
        public const int V_SHANK_LEFT = 5;
        public const int V_SHANK_RIGHT = 6;
+       public const int V_SCREEN_EDGE = 7;
 
        public const int A_NECK = 0;
        public const int A_HIP_LEFT = 1;
@@ -32,10 +33,23 @@ namespace Vision.Systems.KinectHealth.Libraries
        public const int UB_FORWARD = 0;
        public const int UB_LEAN = 1;
        public const int UB_ROTATION = 2;
+       public const int UB_LOS = 3;
 
        public const int SIMPLE_INDEX = 0;
        public const int COMPLEX_INDEX = 1;
        public const int WHOLE_INDEX = 2;
+
+       // Measure for 90 second i.e. 2700 frames, as stated in Wiedemann 3.3.1
+       public const int NUMBER_OF_MEASUREMENT_FRAME = 10 * 30;
+
+       public const int SAMPLE_SET_SIZE = 6;
+
+       public const int UB_FORWARD_SAMPLE_INDEX = 0;
+       public const int UB_LEAN_SAMPLE_INDEX = 1;
+       public const int UB_ROTATION_SAMPLE_INDEX = 2;
+       public const int NECK_SAMPLE_INDEX = 3;
+       public const int LOS_SAMPLE_INDEX = 4;
+       public const int VIEWING_DIST_SAMPLE_INDEX = 5;
 
        // a bone defined as a line between two joints
        public static readonly IList<Tuple<JointType, JointType>> bones = new List<Tuple<JointType, JointType>>() {
