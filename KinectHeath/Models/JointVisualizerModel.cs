@@ -54,7 +54,9 @@ namespace Vision.Systems.KinectHealth.Models
 
         public readonly Sampler[] samplers = null;
 
-        public readonly SimpleUpperBodyModel simpleUpperBodyModel = null;
+        public readonly BodyModel simpleUpperBodyModel = null;
+
+        public readonly BodyModel[] complexUpperBodyModels = null;
 
         /// <summary>
         /// Timer object to handle invocation of calibration procedure.
@@ -98,7 +100,20 @@ namespace Vision.Systems.KinectHealth.Models
             }
 
             this.gcs = new GlobalCoordinateSystem(this.kinectSensor);
-            this.simpleUpperBodyModel = new SimpleUpperBodyModel(EmpiricalData.r_ub,EmpiricalData.sigma_ref_ub);
+            this.simpleUpperBodyModel = new SimpleUpperBodyModel(EmpiricalData.R_UB_FORWARD);
+
+            this.complexUpperBodyModels = new ComplexUpperBodyModelAngle[Constants.NUMBER_OF_COMPLEX_MODELS];
+
+            this.complexUpperBodyModels[Constants.COMPLEX_UB_FORWARD] 
+                = new ComplexUpperBodyModelAngle(EmpiricalData.R_UB_FORWARD, EmpiricalData.LL_UB_FORWARD, EmpiricalData.LU_UB_FORWARD, EmpiricalData.EL_UB_FORWARD, EmpiricalData.EU_UB_FORWARD);
+            this.complexUpperBodyModels[Constants.COMPLEX_UB_LEAN]
+                = new ComplexUpperBodyModelAngle(EmpiricalData.R_UB_LEAN, EmpiricalData.LL_UB_LEAN, EmpiricalData.LU_UB_LEAN, EmpiricalData.EL_UB_LEAN, EmpiricalData.EU_UB_LEAN);
+            this.complexUpperBodyModels[Constants.COMPLEX_NECK]
+                = new ComplexUpperBodyModelAngle(EmpiricalData.R_NECK, EmpiricalData.LL_NECK, EmpiricalData.LU_NECK, EmpiricalData.EL_NECK, EmpiricalData.EU_NECK);
+            this.complexUpperBodyModels[Constants.COMPLEX_LOS]
+                = new ComplexUpperBodyModelAngle(EmpiricalData.R_LOS, EmpiricalData.LL_LOS, EmpiricalData.LU_LOS, EmpiricalData.EL_LOS, EmpiricalData.EU_LOS);
+            this.complexUpperBodyModels[Constants.COMPLEX_VIEWING_DIST]
+                = new ComplexUpperBodyModelCm(EmpiricalData.R_VIEWING_DISTANCE, EmpiricalData.LL_VIEWING_DISTANCE, EmpiricalData.LU_VIEWING_DISTANCE); 
 
             // open the sensor
             this.kinectSensor.Open();
@@ -222,6 +237,8 @@ namespace Vision.Systems.KinectHealth.Models
                             if (this.simpleUpperBodyModel.hasEnoughSamples(this.samplers)) {
                                 modelIndex_local[Constants.SIMPLE_INDEX] = this.simpleUpperBodyModel.ComputeIndex(this.samplers);
                             }
+
+                            //TODO IMPLEMENT EVALUATION TRIGGER OF COMPLEX UPPER BODY MODEL
                         }
 
                         // convert the joint points to depth (display) space

@@ -77,8 +77,9 @@
     <Compile Include="Libraries\Formatting.cs" />
     <Compile Include="Libraries\GlobalCoordinateSystem.cs" />
     <Compile Include="Libraries\Sampler.cs" />
-    <Compile Include="Models\AbstractBodyModel.cs" />
-    <Compile Include="Models\ComplexUpperBodyModel.cs" />
+    <Compile Include="Models\BodyModel.cs" />
+    <Compile Include="Models\ComplexUpperBodyModelAngle.cs" />
+    <Compile Include="Models\ComplexUpperBodyModelCm.cs" />
     <Compile Include="Models\SimpleUpperBodyModel.cs" />
     <Compile Include="Libraries\VectorMath.cs" />
     <Compile Include="Models\JointVisualizerModel.cs" />

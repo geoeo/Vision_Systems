@@ -51,6 +51,14 @@ namespace Vision.Systems.KinectHealth.Libraries
        public const int LOS_SAMPLE_INDEX = 4;
        public const int VIEWING_DIST_SAMPLE_INDEX = 5;
 
+       public const int NUMBER_OF_COMPLEX_MODELS = 5;
+
+       public const int COMPLEX_UB_FORWARD= 0;
+       public const int COMPLEX_UB_LEAN = 1;
+       public const int COMPLEX_NECK = 2;
+       public const int COMPLEX_LOS = 3;
+       public const int COMPLEX_VIEWING_DIST = 4;
+
        // a bone defined as a line between two joints
        public static readonly IList<Tuple<JointType, JointType>> bones = new List<Tuple<JointType, JointType>>() {
            // Torso

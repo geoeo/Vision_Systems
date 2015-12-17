@@ -33,5 +33,10 @@ namespace Vision.Systems.KinectHealth.Libraries
 
             return v - dot * n;
         }
+
+        public static double degreesToRadians(double degrees)
+        {
+            return (degrees * Math.PI) / 180;
+        }
     }
 }
